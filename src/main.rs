@@ -124,10 +124,17 @@ async fn main() -> web3::Result<()> {
                 .long("json")
                 .about("Result will be json format"),
         )
+        .arg(
+            Arg::new("qr")
+                .short('q')
+                .long("qr")
+                .about("Print QR code of Address"),
+        )
         .get_matches();
 
     // Option
     let is_json = matches.is_present("json");
+    let is_qr = matches.is_present("qr");
 
     let ens_name = matches.value_of("name").unwrap();
     let ens_namehash: H256 = H256::from_slice(namehash(ens_name).as_slice());
@@ -228,6 +235,12 @@ async fn main() -> web3::Result<()> {
 
     if is_json {
         println!("{}", json!(ens_info).to_string());
+    } else if is_qr {
+        qr2term::print_qr(format!("{:?}", ens_info.owner)).unwrap();
+        println!(
+            "----\nens:{} owner_address {:?}\n",
+            ens_name, ens_info.owner,
+        );
     } else {
         println!("       owner: {:?}", ens_info.owner);
         println!("    resolver: {:?}", ens_info.resolver);

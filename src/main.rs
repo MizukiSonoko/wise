@@ -5,9 +5,9 @@ extern crate web3;
 
 use std::{env, process};
 use tiny_keccak::{Hasher, Keccak};
-use web3::types::{Address, H256};
 use web3::{
     contract::{Contract, Options},
+    types::{Address, H256},
     Transport,
 };
 
@@ -16,7 +16,7 @@ pub fn namehash(name: &str) -> Vec<u8> {
     if name.is_empty() {
         return node;
     }
-    let mut labels: Vec<&str> = name.split(".").collect();
+    let mut labels: Vec<&str> = name.split('.').collect();
     labels.reverse();
     for label in labels.iter() {
         let mut labelhash = [0u8; 32];

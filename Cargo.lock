@@ -1822,7 +1822,7 @@ dependencies = [
 
 [[package]]
 name = "wise"
-version = "1.0.0"
+version = "1.0.1-alpha.1"
 dependencies = [
  "clap",
  "tiny-keccak",

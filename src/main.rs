@@ -242,7 +242,7 @@ async fn main() -> web3::Result<()> {
             ens_name, ens_info.owner,
         );
     } else {
-        println!("       owner: {:?}", ens_info.owner);
+        println!("\n       owner: {:?}", ens_info.owner);
         println!("    resolver: {:?}", ens_info.resolver);
         println!("\n-------\n");
         if ens_info.content_hash.is_some() {

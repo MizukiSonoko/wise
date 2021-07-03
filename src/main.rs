@@ -11,7 +11,6 @@ use ens::EnsContract;
 use resolver::ResolverContract;
 
 use anyhow::Result;
-use bs58;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
@@ -47,14 +46,12 @@ fn is_name(val: &str) -> Result<()> {
     if val.ends_with(".eth") {
         Ok(())
     } else {
-        Err(WiseError::InvalidArgvName(
-            "the name format must be ***.eth".to_string(),
-        ))?
+        Err(WiseError::InvalidArgvName("the name format must be ***.eth".to_string()).into())
     }
 }
 
 fn strip(val: &str) -> String {
-    return val[1..val.len() - 1].to_string();
+    val[1..val.len() - 1].to_string()
 }
 
 #[derive(Error, Debug)]
@@ -82,19 +79,19 @@ fn decode_content_hash(val: &str) -> Result<(String, String)> {
         return Ok((bs58::encode(&vec).into_string(), "ipfs-ns".to_string()));
     } else if val.starts_with("0xe4") {
         // swarm-ns
-        return Ok((
+        Ok((
             String::from_utf8(hex::decode(&val[2..val.len()])?)?,
             "swarm-ns".to_string(),
-        ));
+        ))
     } else if val.starts_with("0xe5") {
         // ipns-ns
         let vec = hex::decode(&val[11..val.len() - 1])?;
         return Ok((bs58::encode(&vec).into_string(), "ipns-ns".to_string()));
     } else {
-        return Ok((
+        Ok((
             String::from_utf8(hex::decode(&val[2..val.len()])?)?,
             "utf-8".to_string(),
-        ));
+        ))
     }
 }
 
@@ -249,7 +246,7 @@ async fn main() -> web3::Result<()> {
         for (name, value) in &ens_info.text_record {
             println!(" {:<12}: {}", name, value);
         }
-        println!("")
+        println!()
     }
 
     Ok(())

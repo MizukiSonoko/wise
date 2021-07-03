@@ -3,6 +3,7 @@
 use clap::{App, Arg};
 extern crate web3;
 
+use std::{env, process};
 use tiny_keccak::{Hasher, Keccak};
 use web3::types::{Address, H256};
 use web3::{
@@ -138,15 +139,24 @@ async fn main() -> web3::Result<()> {
     if matches.is_present("json") {
         println!("json is not supported");
     }
-
     let ens_name = matches.value_of("name").unwrap();
     let ens_namehash: H256 = H256::from_slice(namehash(ens_name).as_slice());
-
-    let transport = web3::transports::Http::new("")?;
+    let provider_addr = match env::var("WEB3_PROVIDER") {
+        Ok(val) => val,
+        Err(err) => {
+            println!("env 'WEB3_PROVIDER' is not setted, {}", err);
+            process::exit(1);
+        }
+    };
+    let transport = web3::transports::Http::new(&provider_addr)?;
     let ens = EnsContract::new(web3::Web3::new(&transport));
 
     match ens.owner(&ens_namehash).await {
         Ok(owner) => {
+            if owner == web3::types::H160([0u8; 20]) {
+                println!("owner not found name:{}\n", ens_name);
+                process::exit(0);
+            }
             println!("\nowner: {:?}", owner);
         }
         Err(err) => {

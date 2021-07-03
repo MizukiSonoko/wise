@@ -1,6 +1,11 @@
 # Wise (Who IS ENS)
 
+## How to use
 
+1) Add provider url to environment variables
+```sh
+export WEB3_PROVIDER=https://mainnet.infura.io/v3/****
+```
 
 ## How to make contract abi files
 

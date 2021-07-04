@@ -1,4 +1,6 @@
+![logo](https://user-images.githubusercontent.com/6281583/124389737-77e4a880-dd23-11eb-8d77-0439e37f4a5f.png)
 # Wise (WhoIS of ENS)
+
 [![wise](https://img.shields.io/crates/v/wise.svg)](https://crates.io/crates/wise)
 Whois command for ENS.
 

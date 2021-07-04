@@ -113,7 +113,7 @@ async fn main() -> web3::Result<()> {
     let matches = App::new("wise")
         .arg(
             Arg::new("name")
-                .about("searching name like (mizuki.eth)")
+                .about("Searching name like (mizuki.eth)")
                 .index(1)
                 .required(true)
                 .validator(is_name),

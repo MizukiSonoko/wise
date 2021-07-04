@@ -1,5 +1,7 @@
-# Wise (Who IS ENS)
+# Wise (WhoIS of ENS)
 Whois command for ENS.
+
+<img width="518" alt="Screen Shot" src="https://user-images.githubusercontent.com/6281583/124372099-27d5f980-dcc3-11eb-8a63-91e971748bf0.png">
 
 https://user-images.githubusercontent.com/6281583/124363506-917be680-dc76-11eb-8e14-7e4160be83ea.mov
 

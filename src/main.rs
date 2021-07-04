@@ -184,7 +184,6 @@ async fn main() -> web3::Result<()> {
     match ens.resolver(&ens_namehash).await {
         Ok(rslv_addr) => {
             if rslv_addr != web3::types::H160([0u8; 20]) {
-                println!("res{:?} own:{:?}", rslv_addr, ens_info.owner);
                 ens_info.resolver = rslv_addr;
                 let resolver = ResolverContract::new(rslv_addr, web3::Web3::new(&transport));
                 let params = vec![

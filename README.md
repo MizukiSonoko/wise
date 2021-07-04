@@ -1,4 +1,5 @@
 # Wise (WhoIS of ENS)
+[![wise](https://img.shields.io/crates/v/wise.svg)](https://crates.io/crates/wise)
 Whois command for ENS.
 
 <img width="518" alt="Screen Shot" src="https://user-images.githubusercontent.com/6281583/124372099-27d5f980-dcc3-11eb-8a63-91e971748bf0.png">

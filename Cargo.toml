@@ -3,7 +3,7 @@ name = "wise"
 version = "1.0.3-alpha.0"
 authors = ["MizukiSonoko <sonoko@mizuki.io>"]
 edition = "2018"
-license = "MIT"
+license = "MIT OR MPL-2"
 description = "Whois for ENS"
 readme = "README.md"
 

@@ -168,36 +168,66 @@ async fn main() -> web3::Result<()> {
                     process::exit(0);
                 }
                 println!("owner not found name: {}\n", ens_name);
+                println!(
+                    "you can register at https://app.ens.domains/name/{}\n",
+                    ens_name
+                );
                 process::exit(0);
             }
             ens_info.owner = owner;
         }
         Err(err) => {
-            println!("err: {}", err)
+            println!("err: {}", err);
+            process::exit(1);
         }
     }
     match ens.resolver(&ens_namehash).await {
         Ok(rslv_addr) => {
-            ens_info.resolver = rslv_addr;
-            let resolver = ResolverContract::new(rslv_addr, web3::Web3::new(&transport));
-            let params = vec![
-                "vnd.twitter",
-                "vnd.github",
-                "url",
-                "email",
-                "avatar",
-                "description",
-                "notice",
-                "keywords",
-                "com.twitter",
-                "snapshot",
-                "com.github",
-            ];
-            for param in params.iter() {
-                match resolver.text(&ens_namehash, param.to_string()).await {
-                    Ok(value) => {
-                        if !value.is_empty() {
-                            ens_info.text_record.insert(param.to_string(), value);
+            if rslv_addr != web3::types::H160([0u8; 20]) {
+                println!("res{:?} own:{:?}", rslv_addr, ens_info.owner);
+                ens_info.resolver = rslv_addr;
+                let resolver = ResolverContract::new(rslv_addr, web3::Web3::new(&transport));
+                let params = vec![
+                    "vnd.twitter",
+                    "vnd.github",
+                    "url",
+                    "email",
+                    "avatar",
+                    "description",
+                    "notice",
+                    "keywords",
+                    "com.twitter",
+                    "snapshot",
+                    "com.github",
+                ];
+                for param in params.iter() {
+                    match resolver.text(&ens_namehash, param.to_string()).await {
+                        Ok(value) => {
+                            if !value.is_empty() {
+                                ens_info.text_record.insert(param.to_string(), value);
+                            }
+                        }
+                        Err(err) => {
+                            println!("\terr: {}", err)
+                        }
+                    }
+                }
+
+                match resolver.content_hash(&ens_namehash).await {
+                    Ok(bytes_content_hash) => {
+                        let content_hash = strip(
+                            &String::from_utf8(serde_json::to_vec(&bytes_content_hash).unwrap())
+                                .unwrap(),
+                        );
+                        if content_hash != "0x" {
+                            ens_info.content_hash = Some(content_hash);
+                            if ens_info.content_hash.is_some() {
+                                let decoded =
+                                    decode_content_hash(ens_info.content_hash.as_ref().unwrap())
+                                        .expect("decode failed");
+                                ens_info.decoded_content_hash = Some(decoded.0);
+                                ens_info.content_type = Some(decoded.1);
+                            }
                         }
                     }
                     Err(err) => {
@@ -205,31 +235,10 @@ async fn main() -> web3::Result<()> {
                     }
                 }
             }
-
-            match resolver.content_hash(&ens_namehash).await {
-                Ok(bytes_content_hash) => {
-                    let content_hash = strip(
-                        &String::from_utf8(serde_json::to_vec(&bytes_content_hash).unwrap())
-                            .unwrap(),
-                    );
-                    if content_hash != "0x" {
-                        ens_info.content_hash = Some(content_hash);
-                        if ens_info.content_hash.is_some() {
-                            let decoded =
-                                decode_content_hash(ens_info.content_hash.as_ref().unwrap())
-                                    .expect("decode failed");
-                            ens_info.decoded_content_hash = Some(decoded.0);
-                            ens_info.content_type = Some(decoded.1);
-                        }
-                    }
-                }
-                Err(err) => {
-                    println!("\terr: {}", err)
-                }
-            }
         }
         Err(err) => {
-            println!("\terr: {}", err)
+            println!("\terr: {}", err);
+            process::exit(1);
         }
     }
 

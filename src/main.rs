@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
 use std::{env, process};
+use std::{io, io::prelude::*};
 use thiserror::Error;
 use tiny_keccak::{Hasher, Keccak};
 use web3::types::H256;
@@ -108,44 +109,14 @@ struct EnsInfo {
     text_record: HashMap<String, String>,
 }
 
-#[tokio::main]
-async fn main() -> web3::Result<()> {
-    let matches = App::new("wise")
-        .arg(
-            Arg::new("name")
-                .about("Searching name like (mizuki.eth)")
-                .index(1)
-                .required(true)
-                .validator(is_name),
-        )
-        .arg(
-            Arg::new("json")
-                .short('j')
-                .long("json")
-                .about("Result will be json format"),
-        )
-        .arg(
-            Arg::new("qr")
-                .short('q')
-                .long("qr")
-                .about("Print QR code of Address"),
-        )
-        .get_matches();
-
-    // Option
-    let is_json = matches.is_present("json");
-    let is_qr = matches.is_present("qr");
-
-    let ens_name = matches.value_of("name").unwrap();
+async fn fetch_info(
+    transport: &web3::transports::Http,
+    ens_name: &str,
+    is_json: &bool,
+    is_qr: &bool,
+    is_only_addr: &bool,
+) -> Result<()> {
     let ens_namehash: H256 = H256::from_slice(namehash(ens_name).as_slice());
-    let provider_addr = match env::var("WEB3_PROVIDER") {
-        Ok(val) => val,
-        Err(err) => {
-            println!("env 'WEB3_PROVIDER' is not setted, {}", err);
-            process::exit(1);
-        }
-    };
-    let transport = web3::transports::Http::new(&provider_addr)?;
     let ens = EnsContract::new(web3::Web3::new(&transport));
     let mut ens_info = EnsInfo {
         owner: web3::types::H160([0u8; 20]),
@@ -158,8 +129,17 @@ async fn main() -> web3::Result<()> {
 
     match ens.owner(&ens_namehash).await {
         Ok(owner) => {
+            if *is_only_addr {
+                if owner == web3::types::H160([0u8; 20]) {
+                    println!("  {:12} : avaliable", &ens_name[0..ens_name.len() - 4]);
+                } else {
+                    println!("  {:12} : {:?}", &ens_name[0..ens_name.len() - 4], owner);
+                }
+                return Ok(());
+            }
+
             if owner == web3::types::H160([0u8; 20]) {
-                if is_json {
+                if *is_json {
                     println!(
                         "{}",
                         json!({ "result": format!("owner not found name: {}", ens_name) })
@@ -241,9 +221,9 @@ async fn main() -> web3::Result<()> {
         }
     }
 
-    if is_json {
+    if *is_json {
         println!("{}", json!(ens_info).to_string());
-    } else if is_qr {
+    } else if *is_qr {
         qr2term::print_qr(format!("{:?}", ens_info.owner)).unwrap();
         println!(
             "----\nens:{} owner_address {:?}\n",
@@ -269,6 +249,81 @@ async fn main() -> web3::Result<()> {
         }
         println!()
     }
+    Ok(())
+}
 
+#[tokio::main]
+async fn main() -> Result<()> {
+    let provider_addr = match env::var("WEB3_PROVIDER") {
+        Ok(val) => val,
+        Err(err) => {
+            println!("env 'WEB3_PROVIDER' is not setted, {}", err);
+            process::exit(1);
+        }
+    };
+    let transport = web3::transports::Http::new(&provider_addr)?;
+
+    let matches = App::new("wise")
+        .about("cli tool for ENS")
+        .arg(
+            Arg::new("name")
+                .about("Searching name like (mizuki.eth)")
+                .index(1)
+                .validator(is_name),
+        )
+        .arg(
+            Arg::new("json")
+                .short('j')
+                .long("json")
+                .about("Result will be json format"),
+        )
+        .arg(
+            Arg::new("qr")
+                .short('q')
+                .long("qr")
+                .about("Print QR code of Address"),
+        )
+        .get_matches();
+
+    // Option
+    let is_json = matches.is_present("json");
+    let is_qr = matches.is_present("qr");
+
+    let ens_name = matches.value_of("name");
+    if ens_name.is_some() {
+        return fetch_info(&transport, ens_name.unwrap(), &is_json, &is_qr, &false).await;
+    } else {
+    }
+
+    // Check stdin input
+    // Note: I could not solve 'The following required arguments were not provided'
+
+    let mut names = String::new();
+    for l in io::stdin().lock().lines().map(|ln| ln.unwrap()) {
+        names += &l;
+    }
+
+    if names.len() == 0 {
+        println!("The following required arguments were not provided:");
+        println!("\t<name>: like mizuki.eth");
+        println!("USAGE:");
+        println!("wise [FLAGS] <name>\n");
+        println!("For more information try --help");
+    } else {
+        for name in names.split_whitespace() {
+            fetch_info(
+                &transport,
+                &(name
+                    .replace(&['(', ')', ',', '\"', '.', ';', ':', '\''][..], "")
+                    .to_string()
+                    + &".eth".to_string()),
+                &false,
+                &false,
+                &true,
+            )
+            .await
+            .expect("fetch err")
+        }
+    }
     Ok(())
 }
